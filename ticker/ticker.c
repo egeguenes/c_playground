@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 /* TODO: global variables */
 struct timeval start; // start moment
@@ -18,6 +19,10 @@ int total_laps = 0;
 int current_lap_num = 0;
 int points = 0;
 bool race_on = false;
+bool lap_finished = false;
+bool race_cancelled = false;
+bool point_incremented = false;
+const char* race_start_message = " race started\n";
 
 /*
  * Fehlerbehandlung weggelassen bei:
@@ -27,52 +32,46 @@ bool race_on = false;
 
 /* TODO: helpers, signal handlers */
 
+bool check_digits(char *arg, int argc, int* output) {
+    for (int i=0; i<argc; i++) {
+        if (!isdigit(arg[i])) return false;
+    }
+    if (arg[0] == '0' && arg[1] == 'x') arg[0] = arg[2];
+    *output = atoi(arg);
+    return (*output > 0);
+}
+
 // round start, round end, best lap, round change, points
 
 void sigint_action(int sig) {
     if (!race_on) {
+        write(STDERR_FILENO, race_start_message, strlen(race_start_message));
         race_on = true;
-        gettimeofday(&start, NULL); // start the global timer
-        round_start = start; // a new round is started
-        fprintf(stderr, " race started, press Ctrl+C for next round!\n");
+        gettimeofday(&start, NULL);
+        round_start = start;
     } else {
         gettimeofday(&round_end, NULL);
-        struct timeval current_lap_dur;
-        timersub(&round_end, &round_start, &current_lap_dur);
-        timeradd(&total, &current_lap_dur, &total);
-
-        // check the fastest lap
-        if (current_lap_num == 0 || timercmp(&current_lap_dur, &fastest_lap_dur, <)) {
-            fastest_lap_dur = current_lap_dur;
-        }
-        fprintf(stderr, " lap %03d %02ld:%02ld.%04ld\n", current_lap_num + 1,
-                                                        current_lap_dur.tv_sec / 60,
-                                                        current_lap_dur.tv_sec % 60,
-                                                        (long)current_lap_dur.tv_usec / 100);
-        current_lap_num++;
-        round_start = round_end;
-        if (current_lap_num >= total_laps) {
-            // total time output
-            fprintf(stderr, "sum: %02ld:%02ld.%04ld\n", total.tv_sec / 60,
-                                                        total.tv_sec % 60,
-                                                        (long)total.tv_usec / 100);
-            // fastest lap output
-            fprintf(stderr, "fastest: %02ld:%02ld.%04ld\n", fastest_lap_dur.tv_sec / 100,
-                                                            fastest_lap_dur.tv_sec % 60,
-                                                            (long)fastest_lap_dur.tv_usec / 100);
-
-            fprintf(stderr, "points: %d\n", points);
-            exit(EXIT_SUCCESS);
-        }
+        lap_finished = true;
     }
 }
 
 void sigquit_action(int sig) {
-    fprintf(stderr, "race cancelled\n");
+    race_cancelled = true;
 }
 
 void sigusr1_action(int sig) {
-    points++;
+    point_incremented = true;
+}
+
+void print_time(struct timeval *time) {
+    fprintf(stderr, "%02ld:%02ld.%04ld", time->tv_sec / 60,
+                                         time->tv_sec % 60,
+                                         (long)time->tv_usec / 100);
+}
+
+void die(char* message) {
+    perror(message);
+    exit(EXIT_FAILURE);
 }
 
 int main(int argc, char* argv[]) {
@@ -80,10 +79,11 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Usage %s [number of laps]\n", argv[0]);
         return EXIT_FAILURE;
     }
-    total_laps = atoi(argv[1]);
-    if (total_laps <= 0) {
-        fprintf(stderr, "total number of laps should be more than 0, invalid number : %d", total_laps);
-        return EXIT_FAILURE;
+    if (argv[1][0] == '0' && argv[1][1] == 'x') {
+        argv[1] += 2;
+    }
+    if (!check_digits(argv[1], strlen(argv[1]), &total_laps)) {
+        die("total number of laps should be an integer and more than 0!\n");
     }
 
     // start from zero, fastest is 0
@@ -108,7 +108,47 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "ready, press Ctrl+C to start...\n");
 
     while (1) {
-        sleep(1);
+        if (race_cancelled) {
+            fprintf(stderr, "race cancelled\n");
+            break;
+        }
+
+        if (lap_finished && !race_cancelled) {
+            struct timeval current_lap_dur;
+            timersub(&round_end, &round_start, &current_lap_dur);
+            timeradd(&total, &current_lap_dur, &total);
+
+            if (current_lap_num == 0 || timercmp(&current_lap_dur, &fastest_lap_dur, <)) {
+                fastest_lap_dur = current_lap_dur;
+            }
+
+            fprintf(stderr, " lap %03d ", current_lap_num + 1);
+            print_time(&current_lap_dur);
+            fprintf(stderr, "\n");
+
+            current_lap_num++;
+            round_start = round_end;
+            lap_finished = false;
+
+            if (current_lap_num >= total_laps) {
+                fprintf(stderr, "sum: ");
+                print_time(&total);
+                fprintf(stderr, "\n");
+
+                fprintf(stderr, "fastest: ");
+                print_time(&fastest_lap_dur);
+                fprintf(stderr, "\n");
+
+                fprintf(stderr, "points: %d\n", points);
+                break;
+            }
+        }
+
+        if (point_incremented) {
+            points++;
+            fprintf(stderr, "New point received! Total points: %d\n", points);
+            point_incremented = false;
+        }
     }
 
     return EXIT_SUCCESS;
