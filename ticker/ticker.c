@@ -60,7 +60,8 @@ void sigquit_action(int sig) {
 }
 
 void sigusr1_action(int sig) {
-    point_incremented = true;
+    if (race_on)
+        point_incremented = true;
 }
 
 void print_time(struct timeval *time) {
@@ -146,10 +147,9 @@ int main(int argc, char* argv[]) {
 
         if (point_incremented) {
             points++;
-            fprintf(stderr, "New point received! Total points: %d\n", points);
             point_incremented = false;
         }
     }
-
+    fprintf(stderr, "New point received! Total points: %d\n", points);
     return EXIT_SUCCESS;
 }
