@@ -15,14 +15,14 @@ void hire_Lukas();
 void produce_good();
 void sell_good();
 
+// ---------------------------------------------
+//* Important Bookmark
+
 void init() {
     sem_init(&worker_sem, 0, 35);
     sem_init(&product_sem, 0, 0);
     sem_init(&bilanz_sem, 0, 1);
 }
-
-// ---------------------------------------------
-//* Important Bookmark
 
 void *Daniel() {
     while(true) {
