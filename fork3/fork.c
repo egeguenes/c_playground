@@ -10,7 +10,6 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    char* arguments[] = {argv[1], argv[2], argv[3], NULL};
     printf("Program has started! Program: %s : PID: %d\n", argv[0], getpid());
 
     pid_t pid = fork();
@@ -18,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     if (pid == 0) {
         printf("This is the child Process! PID: %d\n", getpid());
-        execv(argv[1], arguments);
+        execlp("./other", "./other", argv[1], argv[2], argv[3], NULL);
         perror("execv failed");  // If execv fails, print error and exit
         exit(EXIT_FAILURE);
     } else if (pid > 0) {
