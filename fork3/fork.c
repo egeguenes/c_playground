@@ -5,10 +5,12 @@
 #include <stdlib.h>
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
-        fprintf(stderr, "Usage: %s <program> <arg1> <arg2>\n", argv[0]);
+    if (argc != 5) {
+        fprintf(stderr, "Usage: %s <program> <num1> <operator> <num2>\n", argv[0]);
         return -1;
     }
+
+    char* args[] = {argv[1], argv[2], argv[3], argv[4], NULL};
 
     printf("Program has started! Program: %s : PID: %d\n", argv[0], getpid());
 
@@ -17,7 +19,7 @@ int main(int argc, char* argv[]) {
 
     if (pid == 0) {
         printf("This is the child Process! PID: %d\n", getpid());
-        execlp("./other", "./other", argv[1], argv[2], argv[3], NULL);
+        execv("./other", args);
         perror("execv failed");  // If execv fails, print error and exit
         exit(EXIT_FAILURE);
     } else if (pid > 0) {
