@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 int getNumLinks(const char* filename);
 
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]) {
         const char* filename = argv[i];
         int num = getNumLinks(filename);
         if (num == -1) {
-            perror("Error");
+            fprintf(stderr, "Error: %s\n", strerror(errno));
         } else {
             printf("%s: %d\n", filename, num);
         }
