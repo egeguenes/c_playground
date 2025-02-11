@@ -9,6 +9,7 @@ int main(int argc, char* argv[]) {
         free(game);
         exit(1);
     }
+    init_game(game);
     run(game);
     free(game);
     exit(0);

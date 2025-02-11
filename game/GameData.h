@@ -5,10 +5,10 @@
 #include "Board.h"
 
 typedef struct {
-    Player *p1;
-    Player *p2;
-    Board *board;
-    const Player *active_player;
+    Player p1;
+    Player p2;
+    Board board;
+    Player *active_player;
 } GameData;
 
 void init_gamedata(GameData *gamedata, Player *p1, Player *p2, Board *board);
