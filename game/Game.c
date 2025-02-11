@@ -1,5 +1,6 @@
 #include "Game.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void init_game(Game *game) {
     Player *p1 = game->gamedata.p1;
@@ -9,7 +10,7 @@ void init_game(Game *game) {
     p1->mark = 'x';
     p2->mark = 'o';
     init_board(board, '-');
-    init_gamedata(&game->gamedata, *p1, *p2, *board);
+    init_gamedata(&game->gamedata, p1, p2, board);
 }
 
 void run(Game *game) {
@@ -30,21 +31,32 @@ void gameLoop(Game *game) {
 }
 
 void markBoard(Game *game) {
-    printf("Input of player %d: \n", (game->gamedata.active_player == game->gamedata.p1) ? 1 : 2);
+    int input;
+    while ((input = queryInput(game)) != -1) {
+        fprintf(stderr, "The field should be more than 0 and less than 8!");
+    }
+    placeMark(game->gamedata.board, input, game->gamedata.active_player);
 }
-int queryInput(Game *game);
-void endGame(Game *game);
 
-char getCharInput() {
-    char input[3];
+int queryInput(Game *game) {
+    char input[10];
+    printf("Field to mark: ");
+
     if (fgets(input, sizeof(input), stdin) == NULL) {
-        return '\0';
+        return -1;
     }
 
-    if (input[1] != '\n' && input[1] != '\0') {
-        while(getchar() != '\n');
-        return '\n';
+    char *endptr;
+    int number = strtol(input, &endptr, 10);
+
+    if (endptr == input || (*endptr != '\n' && *endptr != '\0')) {
+        return -1;
     }
 
-    return input[0];
+    return number;
+}
+
+void endGame(Game *game) {
+    printBoard(game->gamedata.board);
+    printf("Game has ended!\n");
 }

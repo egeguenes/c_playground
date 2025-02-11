@@ -1,9 +1,9 @@
 #include "GameData.h"
 
 void init_gamedata(GameData *gamedata, Player *p1, Player *p2, Board *board) {
-    gamedata->p1 = *p1;
-    gamedata->p2 = *p2;
-    gamedata->board = *board;
+    gamedata->p1 = p1;
+    gamedata->p2 = p2;
+    gamedata->board = board;
     gamedata->active_player = gamedata->p1;
 }
 
