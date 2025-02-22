@@ -1,25 +1,21 @@
 #include "df.h"
 
-#include <stdio.h>
 #include <unistd.h>
+#include <stdio.h>
 
 int main(int argc, char* argv[]) {
 
-    int alice = 17;
-    int bob = 23;
-    int mod = 31;
-    int gen = 12;
-
-    for (int i=1; i<mod; i++) {
-        if (power_with_modulo(gen, i, gen) == alice) {
-            for (int j=1; j<mod; j++) {
-                if (power_with_modulo(gen, j, mod) == bob) {
-                    int result = power_with_modulo(gen, i*j, mod);
-                    printf("Alice private is -> %d\nBob private is -> %d\nThe secret is -> %d\n", i, j, result);
-                    exit(0);
-                }
-            }
-        }
+    if (argc != 5) {
+        fprintf(stderr, "Usage: %s <generator_number> <modulo_number> <alica_public_key> <bob_public_key>\n", argv[0]);
+        exit(1);
     }
+
+    int gen = atoi(argv[1]);
+    int mod = atoi(argv[2]);
+    int alice = atoi(argv[3]);
+    int bob = atoi(argv[4]);
+
+    diffie_hellman(gen, mod, alice, bob);
+
     exit(1);
 }
