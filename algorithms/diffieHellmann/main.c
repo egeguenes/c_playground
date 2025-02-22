@@ -17,5 +17,5 @@ int main(int argc, char* argv[]) {
 
     diffie_hellman(gen, mod, alice, bob);
 
-    exit(1);
+    exit(0);
 }
