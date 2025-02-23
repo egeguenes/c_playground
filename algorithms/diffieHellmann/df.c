@@ -18,10 +18,18 @@ bool isPrime(int num) {
 }
 
 int power_with_modulo(int base, int power, int mod) {
-    while (power-- > 1) {
-        base = (base*base)%mod;
+    int result = 1;
+    base = base%mod;
+
+    while (power > 0) {
+        if (power%2 == 1) {
+            result = (result * base) % mod;
+        }
+        power >>= 1;
+        base = (base * base) % mod;
     }
-    return base;
+
+    return result;
 }
 
 long int power_func(int base, int exp) {
@@ -33,7 +41,7 @@ long int power_func(int base, int exp) {
 }
 
 void diffie_hellman(int generator, int modulo, int alice_public, int bob_public) {
-    if (generator<=1 || !isPrime(modulo) || (alice_public>=modulo || alice_public<1) || (bob_public>=modulo || bob_public<1)) {
+    if (generator<=1 || !isPrime(modulo) || (alice_public>=modulo || alice_public<0) || (bob_public>=modulo || bob_public<0)) {
         fprintf(stderr, "Invalid input!\n");
         exit(1);
     }
